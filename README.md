@@ -125,8 +125,6 @@ Key configuration options:
 
 ## MCP Tools Documentation
 
-### Tools
-
 #### analyze_address
 Analyze a TON address for its balance, jetton holdings, NFTs, and recent activity. Optionally performs deep forensic analysis if `deep_analysis` is True. Use for questions about account overview, holdings, or activity.
 
