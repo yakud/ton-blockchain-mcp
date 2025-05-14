@@ -135,53 +135,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support, please open an issue on GitHub or contact the development team.
-```
 
-## Installation and Usage Instructions
+## Example: Check TON Balance for Wallet Address using Claude Desktop
 
-1. **Create the project structure**:
-```bash
-mkdir ton-mcp-server
-cd ton-mcp-server
-mkdir -p src config examples
-```
+Below is an example of using the MCP server with Claude Desktop to check the TON balance for a wallet address:
 
-2. **Create virtual environment**:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
-
-4. **Set up environment**:
-```bash
-export TON_API_KEY=your_ton_api_key
-```
-
-5. **Run the server**:
-```bash
-python -m src.mcp_server
-```
-
-6. **Test with example client**:
-```bash
-python examples/client_example.py
-```
-
-This comprehensive TON MCP server provides:
-
-- ✅ Full MCP protocol implementation
-- ✅ Natural language query processing
-- ✅ TON blockchain data analysis
-- ✅ Trading pattern analysis
-- ✅ Forensics and compliance tools
-- ✅ Hot trends detection
-- ✅ Configurable and extensible architecture
-- ✅ Docker support
-- ✅ Comprehensive documentation
-
-The server is ready to be deployed and can handle complex queries about the TON blockchain using natural language!
+![Check TON Balance for Wallet Address](docs/example_use_claude_desktop.png)
