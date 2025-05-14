@@ -54,11 +54,12 @@ docker-compose up --build
 
 You can easily use this MCP server with Claude Desktop for natural language blockchain queries. Below is an example of checking the TON balance for a wallet address:
 
-![Check TON Balance for Wallet Address](docs/example_use_claude_desktop.png)
+![Check TON Balance for Wallet Address](docs/example_claude_for_desktop.png)
 
 ### Claude Desktop Configuration Example
 
 To use this MCP server with Claude Desktop, add the following to your Claude Desktop config:
+* You might need to replace the Python env setup with your own.
 
 ```json
 {
