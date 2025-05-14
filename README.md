@@ -43,6 +43,14 @@ export TON_API_KEY=your_api_key_here
 python -m src.mcp_server
 ```
 
+### PyPI Installation
+
+You can also install the TON MCP Server directly from PyPI:
+
+```bash
+pip install ton-mcp-server
+```
+
 ### Using Docker
 
 ```bash
