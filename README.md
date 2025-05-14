@@ -1,6 +1,6 @@
 # TON MCP Server
 
-A Model Context Protocol server for natural language interaction with the TON blockchain.
+A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain.
 
 ## Features
 
@@ -21,8 +21,8 @@ A Model Context Protocol server for natural language interaction with the TON bl
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/devonmojito/ton-mcp-server.git
-cd ton-mcp-server
+git clone https://github.com/devonmojito/ton-blockchain-mcp.git
+cd ton-blockchain-mcp
 ```
 
 2. Install dependencies:
@@ -94,25 +94,31 @@ Key configuration options:
 ### Tools
 
 #### analyze_address
-Analyze a TON address including balance, transactions, and patterns.
+Analyze a TON address for its balance, jetton holdings, NFTs, and recent activity. Optionally performs deep forensic analysis if `deep_analysis` is True. Use for questions about account overview, holdings, or activity.
 
 **Parameters:**
 - `address` (str): TON address to analyze
-- `deep_analysis` (bool): Enable deep forensic analysis
+- `deep_analysis` (bool, optional): Enable deep forensic analysis
+
+#### get_transaction_details
+Get details and analysis for a specific TON blockchain transaction by its hash. Use for questions about a particular transaction, its participants, value, or type.
+
+**Parameters:**
+- `tx_hash` (str): Transaction hash
 
 #### find_hot_trends
-Find hot trends on TON blockchain.
+Find trending tokens, pools, or accounts on the TON blockchain for a given timeframe and category. Use for questions about what's hot, trending, or popular on TON.
 
 **Parameters:**
-- `timeframe` (str): Time period (1h, 24h, 7d)
-- `category` (str): Type of trends (tokens, pools, accounts)
+- `timeframe` (str, optional): Time period (e.g., 1h, 24h, 7d)
+- `category` (str, optional): Type of trends (tokens, pools, accounts)
 
-#### conduct_forensics
-Conduct blockchain forensics investigation.
+#### analyze_trading_patterns
+Analyze trading patterns for a TON address over a specified timeframe. Use for questions about trading activity, frequency, jetton transfers, or DEX swaps for an account.
 
 **Parameters:**
-- `target` (str): Address or transaction hash
-- `investigation_type` (str): Type of investigation
+- `address` (str): TON address
+- `timeframe` (str, optional): Time period (e.g., 24h)
 
 ### Prompts
 

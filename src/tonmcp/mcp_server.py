@@ -33,49 +33,35 @@ class TonMcpServer:
 
     def _register_tools(self):
         logger.debug("Registering tools...")
-        @tmcp.tool()
-        async def analyze_address(address: str) -> any:
-            logger.debug(f"analyze_address called with address={address}")
-            result = await self.tool_manager.analyze_address(address=address)
+        @tmcp.tool(
+            description="Analyze a TON address for its balance, jetton holdings, NFTs, and recent activity. Optionally performs deep forensic analysis if deep_analysis is True. Use for questions about account overview, holdings, or activity."
+        )
+        async def analyze_address(address: str, deep_analysis: bool = False) -> any:
+            logger.debug(f"analyze_address called with address={address}, deep_analysis={deep_analysis}")
+            result = await self.tool_manager.analyze_address(address=address, deep_analysis=deep_analysis)
             logger.debug(f"analyze_address result: {result}")
             return result
 
-        # Minimal ping tool for debugging
-        @tmcp.tool()
-        async def ping() -> str:
-            logger.debug("ping tool called")
-            return "pong"
-
-        @tmcp.tool()
+        @tmcp.tool(
+            description="Get details and analysis for a specific TON blockchain transaction by its hash. Use for questions about a particular transaction, its participants, value, or type."
+        )
         async def get_transaction_details(tx_hash: str) -> Any:
             """Get details for a transaction hash."""
             return await self.tool_manager.get_transaction_details(tx_hash=tx_hash)
 
-        @tmcp.tool()
-        async def find_hot_trends() -> Any:
+        @tmcp.tool(
+            description="Find trending tokens, pools, or accounts on the TON blockchain for a given timeframe and category. Use for questions about what's hot, trending, or popular on TON."
+        )
+        async def find_hot_trends(timeframe: str = "1h", category: str = "tokens") -> Any:
             """Find hot trends on TON."""
-            return await self.tool_manager.find_hot_trends()
+            return await self.tool_manager.find_hot_trends(timeframe=timeframe, category=category)
 
-        @tmcp.tool()
-        async def analyze_trading_patterns(address: str) -> Any:
+        @tmcp.tool(
+            description="Analyze trading patterns for a TON address over a specified timeframe. Use for questions about trading activity, frequency, jetton transfers, or DEX swaps for an account."
+        )
+        async def analyze_trading_patterns(address: str, timeframe: str = "24h") -> Any:
             """Analyze trading patterns for an address."""
-            return await self.tool_manager.analyze_trading_patterns(address=address)
-
-        @tmcp.tool()
-        async def conduct_forensics(address: str) -> Any:
-            """Conduct forensics on an address."""
-            return await self.tool_manager.conduct_forensics(address=address)
-
-        @tmcp.tool()
-        async def get_account_balance(address: str) -> Any:
-            """Get account balance for an address."""
-            return await self.tool_manager.get_account_balance(address=address)
-
-        @tmcp.tool()
-        async def search_transactions(query: str) -> Any:
-            """Search transactions by query."""
-            parsed_args = parse_natural_language_query(query)
-            return await self.tool_manager.search_transactions(**parsed_args)
+            return await self.tool_manager.analyze_trading_patterns(address=address, timeframe=timeframe)
 
     def _register_prompts(self):
         logger.debug("Registering prompts...")

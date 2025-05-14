@@ -22,14 +22,17 @@ class ToolManager:
         try:
             # Basic account info
             account_info = await self.ton_client.get_account_info(address)
-            balance = await self.ton_client.get_account_balance(address)
+            jetton_balances = await self.ton_client.get_jetton_balances(address)
+            nfts = await self.ton_client.get_account_nfts(address)
             transactions = await self.ton_client.get_account_transactions(address, limit=50)
 
             result = {
                 "address": address,
                 "status": account_info.get("status"),
-                "balance": balance,
-                "transaction_count": len(transactions.get("transactions", [])),
+                "account_info": account_info,
+                "jetton_balances": jetton_balances.get("balances", []),
+                "nfts": nfts.get("nft_items", []),
+                "transaction_count": len(transactions.get("events", [])),
                 "analysis": {}
             }
 
