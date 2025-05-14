@@ -123,7 +123,7 @@ Key configuration options:
 - `MCP_PORT`: Server port (default: 8000)
 - `LOG_LEVEL`: Logging level (default: INFO)
 
-## API Documentation
+## MCP Tools Documentation
 
 ### Tools
 
