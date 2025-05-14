@@ -1,5 +1,4 @@
-# TON MCP Server
-Contact Author on Telegram: @devonmojito
+# TON BLOCKCHAIN MCP 
 
 A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain.
 
