@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  ton-mcp-server:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - TON_API_KEY=${TON_API_KEY}
+      - LOG_LEVEL=INFO
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Add PostgreSQL for persistent storage
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=ton_mcp
+      - POSTGRES_USER=ton_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Optional: Add Redis for caching
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
