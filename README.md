@@ -1,4 +1,5 @@
 # TON MCP Server
+Contact Author on Telegram: @devonmojito
 
 A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain.
 
@@ -14,8 +15,8 @@ A Model Context Protocol (MCP) server for natural language interaction with the 
 
 ### Prerequisites
 
-- Python 3.10+
-- TON API key from TON
+- Python 3.8+
+- TON API key from [TONAPI](https://tonconsole.com/tonapi)
 
 ### Installation
 
