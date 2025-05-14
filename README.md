@@ -123,7 +123,9 @@ Key configuration options:
 - `MCP_PORT`: Server port (default: 8000)
 - `LOG_LEVEL`: Logging level (default: INFO)
 
-## MCP Tools Documentation
+## MCP Tools & System Prompts Documentation
+
+### Tools
 
 #### analyze_address
 Analyze a TON address for its balance, jetton holdings, NFTs, and recent activity. Optionally performs deep forensic analysis if `deep_analysis` is True. Use for questions about account overview, holdings, or activity.
@@ -152,7 +154,7 @@ Analyze trading patterns for a TON address over a specified timeframe. Use for q
 - `address` (str): TON address
 - `timeframe` (str, optional): Time period (e.g., 24h)
 
-### Prompts
+### System Prompts
 
 - `trading_analysis`: Generate trading analysis prompts
 - `forensics_investigation`: Generate forensics prompts
