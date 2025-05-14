@@ -141,3 +141,25 @@ For support, please open an issue on GitHub or contact the development team.
 Below is an example of using the MCP server with Claude Desktop to check the TON balance for a wallet address:
 
 ![Check TON Balance for Wallet Address](docs/example_use_claude_desktop.png)
+
+## Claude Desktop Configuration Example
+
+To use this MCP server with Claude Desktop, add the following to your Claude Desktop config:
+
+```json
+{
+  "mcpServers": {
+    "ton-mcp-server": {
+      "command": "/Users/devon/ton-mcp/ton-mcp-server/venv/bin/python",
+      "args": [
+        "-m",
+        "tonmcp.mcp_server"
+      ],
+      "cwd": "/Users/devon/ton-mcp/ton-mcp-server/src",
+      "env": {
+        "PYTHONPATH": "/Users/devon/ton-mcp/ton-mcp-server/src"
+      }
+    }
+  }
+}
+```
