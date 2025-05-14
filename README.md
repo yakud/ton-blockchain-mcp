@@ -31,6 +31,7 @@ pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
+* You might want to put the API key in .env as well
 ```bash
 export TON_API_KEY=your_api_key_here
 ```
