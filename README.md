@@ -1,6 +1,6 @@
 # TON BLOCKCHAIN MCP 
 
-A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain.
+A Model Context Protocol (MCP) server for natural language interaction with the [TON blockchain](http://ton.org/).
 
 ## Features
 
