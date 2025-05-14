@@ -1,8 +1,63 @@
+Metadata-Version: 2.4
+Name: ton-mcp-server
+Version: 0.1.0
+Summary: Model Context Protocol server for TON blockchain data analysis
+Home-page: https://github.com/devonmojito/ton-mcp-server
+Author: Devon Mojito
+Author-email: devonmojito@gmail.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mcp[cli]>=1.4.1
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.23.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: ton
+Requires-Dist: aiohttp>=3.8.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: orjson>=3.9.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: structlog>=23.0.0
+Requires-Dist: python-dateutil>=2.8.0
+Requires-Dist: anyio>=3.7.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Provides-Extra: nlp
+Requires-Dist: spacy>=3.6.0; extra == "nlp"
+Requires-Dist: nltk>=3.8.0; extra == "nlp"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # TON BLOCKCHAIN MCP 
 
 A Model Context Protocol (MCP) server for natural language interaction with the [TON blockchain](http://ton.org/).
 
-![TON Blockchain MCP Cover](docs/cover_image_top.png)
+![TON Blockchain MCP Cover](docs/cover_image.png)
 
 ## Features
 
@@ -41,14 +96,6 @@ export TON_API_KEY=your_api_key_here
 4. Run the server:
 ```bash
 python -m src.mcp_server
-```
-
-### PyPI Installation
-
-You can also install the TON MCP Server directly from PyPI:
-
-```bash
-pip install ton-mcp-server
 ```
 
 ### Using Docker

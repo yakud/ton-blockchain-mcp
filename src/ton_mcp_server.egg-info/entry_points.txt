@@ -1,0 +1,2 @@
+[console_scripts]
+ton-mcp-server = src.mcp_server:main
