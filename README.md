@@ -1,5 +1,4 @@
 # TON MCP Server
-Contact Author on Telegram: @devonmojito
 
 A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain.
 
@@ -174,4 +173,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, please open an issue on GitHub or contact the development team.
+For support, please open an issue on GitHub or contact the author on Telegram: @devonmojito
