@@ -62,9 +62,7 @@ docker-compose up --build
 
 ## Example: Using TON MCP Server with Claude Desktop
 
-You can easily use this MCP server with Claude Desktop for natural language blockchain queries. Below is an example of checking the TON balance for a wallet address:
-
-![Check TON Balance for Wallet Address](docs/example.png)
+You can easily use this MCP server with Claude Desktop for natural language blockchain queries. Below are some example use cases:
 
 ### More Example Screenshots
 
