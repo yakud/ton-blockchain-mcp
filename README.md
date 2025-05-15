@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server for natural language interaction with the [TON blockchain](http://ton.org/).
 
-![TON Blockchain MCP Cover](docs/cover_image_top.png)
+![TON Blockchain MCP Cover](docs/cover.png)
 
 ## Features
 
