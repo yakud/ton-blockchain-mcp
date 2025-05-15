@@ -26,14 +26,56 @@ class ToolManager:
             nfts = await self.ton_client.get_account_nfts(address)
             transactions = await self.ton_client.get_account_transactions(address, limit=50)
 
+            # --- Real-time price aggregation ---
+            ton_balance = float(account_info.get("balance", 0)) / 1e9
+            ton_price = None
+            ton_usd = 0
+            # Fetch real-time TON price using the MCP tool interface
+            ton_price_data = await self.get_ton_price(currency="usd")
+            if ton_price_data and ton_price_data.get("price"):
+                try:
+                    ton_price = float(ton_price_data["price"])
+                    ton_usd = ton_balance * ton_price
+                except Exception:
+                    ton_usd = 0
+            else:
+                ton_usd = 0
+
+            jettons = jetton_balances.get("balances", [])
+            jetton_addresses = [j["jetton"]["address"] for j in jettons if j.get("jetton", {}).get("address")]
+            jetton_prices = await self.ton_client.get_jetton_price(tokens=jetton_addresses, currency="usd") if jetton_addresses else {}
+
+            jetton_usd_total = 0
+            jetton_usd_details = []
+            for jetton in jettons:
+                address = jetton.get("jetton", {}).get("address")
+                symbol = jetton.get("jetton", {}).get("symbol", "Unknown")
+                decimals = jetton.get("jetton", {}).get("decimals", 9)
+                balance = float(jetton.get("balance", 0)) / (10 ** decimals)
+                price = jetton_prices.get(address, {}).get("price", 0)
+                usd_value = balance * price
+                jetton_usd_total += usd_value
+                jetton_usd_details.append({
+                    "symbol": symbol,
+                    "address": address,
+                    "balance": balance,
+                    "usd_value": usd_value
+                })
+
+            total_usd = ton_usd + jetton_usd_total
+
             result = {
                 "address": address,
                 "status": account_info.get("status"),
                 "account_info": account_info,
-                "jetton_balances": jetton_balances.get("balances", []),
+                "jetton_balances": jettons,
                 "nfts": nfts.get("nft_items", []),
                 "transaction_count": len(transactions.get("events", [])),
-                "analysis": {}
+                "analysis": {},
+                "wallet_value_usd": total_usd,
+                "ton_usd_value": ton_usd,
+                "jetton_usd_value": jetton_usd_total,
+                "jetton_usd_details": jetton_usd_details
             }
 
             if deep_analysis:
@@ -277,3 +319,38 @@ class ToolManager:
             characteristics.append("Highly active")
         
         return characteristics[:5]  # Limit to top 5 characteristics
+
+    async def get_ton_price(self, currency: str = "usd") -> Dict[str, Any]:
+        """Get the current real-time TON price in the specified currency (default: USD) and recent price changes."""
+        try:
+            return await self.ton_client.get_ton_price(currency=currency)
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def get_jetton_price(self, tokens: List[str], currency: str = "usd") -> Dict[str, Any]:
+        """Get the current price and recent changes for specified jetton tokens (not TON) in the given currency."""
+        try:
+            return await self.ton_client.get_jetton_price(tokens=tokens, currency=currency)
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def _analyze_transaction_patterns(self, transactions: Dict) -> Dict[str, Any]:
+        """
+        Analyze transaction patterns for a given set of transactions.
+        Args:
+            transactions: The transactions dictionary (as returned by get_account_transactions)
+        Returns:
+            A dictionary with analysis results.
+        """
+        events = transactions.get("events", []) if transactions else []
+        total_transactions = len(events)
+        incoming = [tx for tx in events if tx.get("in_msg", {}).get("source")]
+        outgoing = [tx for tx in events if tx.get("out_msgs")]
+
+        return {
+            "total_transactions": total_transactions,
+            "incoming_transactions": len(incoming),
+            "outgoing_transactions": len(outgoing),
+            "first_transaction_time": events[-1].get("utime") if events else None,
+            "last_transaction_time": events[0].get("utime") if events else None,
+        }
