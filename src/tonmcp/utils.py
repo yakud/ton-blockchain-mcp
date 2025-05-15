@@ -491,3 +491,9 @@ def analyze_transaction_pattern(transactions: list[dict]) -> dict:
         tx_type = tx.get("type", "unknown")
         summary[tx_type] = summary.get(tx_type, 0) + 1
     return summary
+
+
+def assert_full_address(address: str):
+    """Raise an error if the address is not full (less than 48 chars or contains '...')."""
+    if not address or len(address) < 48 or '...' in address:
+        raise ValueError(f"Address is not full: {address}")

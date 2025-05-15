@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 from .ton_client import TonClient
-from .utils import extract_addresses, format_ton_amount, analyze_transaction_pattern
+from .utils import extract_addresses, format_ton_amount, analyze_transaction_pattern, assert_full_address
 
 
 class ToolManager:
@@ -78,6 +78,8 @@ class ToolManager:
                 "jetton_usd_details": jetton_usd_details
             }
 
+            assert_full_address(address)
+
             if deep_analysis:
                 # Analyze transaction patterns
                 tx_analysis = await self._analyze_transaction_patterns(transactions)
@@ -98,9 +100,88 @@ class ToolManager:
         Args:
             tx_hash: Transaction hash to analyze
         """
+        # Fallback mapping for well-known jettons
+        JETTON_SYMBOL_MAP = {
+            "0:dfbbf59e9b306b86194a2441f4f80b51bbd68253290549bd76a7165c0082ae80": "USDT",
+            # Add more well-known jettons here as needed
+        }
         try:
             transaction = await self.ton_client.get_transaction(tx_hash)
-            
+
+            jetton_transfers = []
+            out_msgs = transaction.get("out_msgs", [])
+            main_transfer = None
+            max_amount = 0
+
+            for msg in out_msgs:
+                decoded_body = msg.get("decoded_body", {})
+                actions = decoded_body.get("actions", [])
+                for action in actions:
+                    msg_internal = action.get("msg", {}).get("message_internal", {})
+                    body = msg_internal.get("body", {})
+                    if (
+                        body.get("is_right") and
+                        body.get("value", {}).get("sum_type") == "JettonTransfer"
+                    ):
+                        jetton_transfer = body.get("value", {}).get("value", {})
+                        amount = jetton_transfer.get("amount")
+                        destination = jetton_transfer.get("destination")
+                        jetton_master_address = msg_internal.get("dest")
+                        try:
+                            amount_float = float(amount) / 1e6
+                        except Exception:
+                            amount_float = amount
+                        symbol = None
+                        if jetton_master_address:
+                            try:
+                                jetton_info = await self.ton_client.get_jetton_info(jetton_master_address)
+                                symbol = jetton_info.get("metadata", {}).get("symbol") or jetton_info.get("symbol")
+                            except Exception:
+                                symbol = None
+                            if not symbol:
+                                symbol = JETTON_SYMBOL_MAP.get(jetton_master_address)
+                        transfer = {
+                            "amount": amount,
+                            "amount_human": amount_float,
+                            "destination": destination,
+                            "jetton_address": jetton_master_address,
+                            "symbol": symbol,
+                            "from": msg.get("source", {}).get("address"),
+                            "is_main": False
+                        }
+                        assert_full_address(transfer["destination"])
+                        if transfer["from"]:
+                            assert_full_address(transfer["from"])
+                        if transfer["jetton_address"]:
+                            assert_full_address(transfer["jetton_address"])
+                        jetton_transfers.append(transfer)
+                        # Track the main transfer (largest amount)
+                        try:
+                            amt = float(amount)
+                            if amt > max_amount:
+                                max_amount = amt
+                                main_transfer = transfer
+                        except Exception:
+                            pass
+
+            # Mark the main transfer
+            if main_transfer:
+                for t in jetton_transfers:
+                    t["is_main"] = (t is main_transfer)
+
+            # Find the smallest transfer of the same symbol as the main transfer (likely the fee)
+            jetton_fee = None
+            if main_transfer:
+                same_symbol_transfers = [t for t in jetton_transfers if t["symbol"] == main_transfer["symbol"] and not t["is_main"]]
+                if same_symbol_transfers:
+                    jetton_fee_transfer = min(same_symbol_transfers, key=lambda t: float(t["amount"]))
+                    jetton_fee = {
+                        "amount": jetton_fee_transfer["amount"],
+                        "amount_human": jetton_fee_transfer["amount_human"],
+                        "symbol": jetton_fee_transfer["symbol"],
+                        "destination": jetton_fee_transfer["destination"]
+                    }
+
             # Enhance with additional analysis
             analysis = {
                 "type": self._classify_transaction_type(transaction),
@@ -109,9 +190,11 @@ class ToolManager:
                 "participants": {
                     "from": transaction.get("from"),
                     "to": transaction.get("to")
-                }
+                },
+                "jetton_transfers": jetton_transfers,
+                "jetton_fee": jetton_fee
             }
-            
+
             return {
                 "transaction": transaction,
                 "analysis": analysis
@@ -354,3 +437,19 @@ class ToolManager:
             "first_transaction_time": events[-1].get("utime") if events else None,
             "last_transaction_time": events[0].get("utime") if events else None,
         }
+
+    def _classify_transaction_type(self, transaction: dict) -> str:
+        """
+        Classify the type of a TON transaction based on its fields.
+        """
+        if not transaction:
+            return "unknown"
+        if transaction.get("jetton_transfer"):
+            return "jetton_transfer"
+        if transaction.get("swap"):
+            return "dex_swap"
+        if transaction.get("nft_transfer"):
+            return "nft_transfer"
+        if transaction.get("value", 0) > 0:
+            return "ton_transfer"
+        return "other"

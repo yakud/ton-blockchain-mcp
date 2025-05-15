@@ -66,6 +66,16 @@ You can easily use this MCP server with Claude Desktop for natural language bloc
 
 ![Check TON Balance for Wallet Address](docs/example.png)
 
+### More Example Screenshots
+
+**Analyze Address Example:**
+
+![Analyze Address Example](docs/example_analyze_address.png)
+
+**Get Transaction Details Example:**
+
+![Get Transaction Details Example](docs/example_get_transaction_details.png)
+
 ### Claude Desktop Configuration Example
 
 To use this MCP server with Claude Desktop, add the following to your Claude Desktop config:
