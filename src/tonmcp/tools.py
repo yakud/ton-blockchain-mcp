@@ -1,7 +1,10 @@
 import asyncio
+import logging
+logging.basicConfig(level=logging.DEBUG)
 from typing import Dict, List, Optional, Any
 import re
 from datetime import datetime, timedelta
+from collections import Counter
 
 from .ton_client import TonClient
 from .utils import extract_addresses, format_ton_amount, analyze_transaction_pattern, assert_full_address
@@ -234,32 +237,101 @@ class ToolManager:
     async def analyze_trading_patterns(self, address: str, timeframe: str = "24h") -> Dict[str, Any]:
         """
         Analyze trading patterns for an address.
-        
         Args:
             address: Address to analyze
-            timeframe: Time period for analysis
+            timeframe: Time period for analysis (e.g., "24h", "7d", "30d", "1y")
         """
+        logger = logging.getLogger("tonmcp.tools.analyze_trading_patterns")
+
         try:
-            # Get recent transactions
-            transactions = await self.ton_client.get_account_transactions(address, limit=200)
-            
-            # Filter trading-related transactions
-            trading_txs = self._filter_trading_transactions(transactions)
-            
-            # Analyze patterns
-            events = trading_txs  # Assuming trading_txs is a list of events
-            jetton_transfers = [tx for tx in trading_txs if tx.get("type") == "jetton_transfer"]
-            dex_swaps = [tx for tx in trading_txs if tx.get("type") == "dex_swap"]
+            # Calculate start_date and end_date based on timeframe
+            now = datetime.utcnow()
+            end_date = int(now.timestamp())
+            if timeframe.endswith("y"):
+                years = int(timeframe[:-1])
+                start_date = int((now - timedelta(days=365 * years)).timestamp())
+            elif timeframe.endswith("d"):
+                days = int(timeframe[:-1])
+                start_date = int((now - timedelta(days=days)).timestamp())
+            elif timeframe.endswith("h"):
+                hours = int(timeframe[:-1])
+                start_date = int((now - timedelta(hours=hours)).timestamp())
+            else:
+                # Default to 24h
+                start_date = int((now - timedelta(hours=24)).timestamp())
+
+            all_events = []
+            before_lt = None
+            while True:
+                response = await self.ton_client.get_account_transactions(
+                    address,
+                    limit=100,
+                    before_lt=before_lt,
+                    start_date=start_date,
+                    end_date=end_date
+                )
+                events = response.get("events", [])
+                if not events:
+                    break
+                all_events.extend(events)
+                if len(events) < 100:
+                    break
+                before_lt = events[-1].get("lt")
+                if not before_lt:
+                    break
+
+            # Debug: log the structure of the first few events and actions
+            logger.debug(f"Fetched {len(all_events)} events for address {address}")
+            for i, event in enumerate(all_events[:3]):
+                logger.debug(f"Event {i}: {event}")
+                actions = event.get("actions", [])
+                for j, action in enumerate(actions[:3]):
+                    logger.debug(f"  Action {j}: {action}")
+
+            # Count actions
+            jetton_transfer_types = {"jetton_transfer", "JettonTransfer"}
+            dex_swap_types = {"dex_swap", "JettonSwap", "DexSwap", "Swap"}
+
+            jetton_transfers = 0
+            dex_swaps = 0
+            trading_volume = 0
+
+            for event in all_events:
+                for action in event.get("actions", []):
+                    action_type = action.get("type", "")
+                    if action_type in jetton_transfer_types:
+                        jetton_transfers += 1
+                        # Try both possible locations for amount
+                        amount = action.get("JettonTransfer", {}).get("amount") or action.get("amount")
+                        if amount is not None:
+                            try:
+                                trading_volume += int(amount)
+                            except Exception:
+                                pass
+                    elif action_type in dex_swap_types:
+                        dex_swaps += 1
+                        amount = action.get("JettonSwap", {}).get("amount_in") or action.get("amount_in")
+                        if amount is not None:
+                            try:
+                                trading_volume += int(amount)
+                            except Exception:
+                                pass
+
+            total_events = len(all_events)
+            is_active_trader = dex_swaps > 10
+            trading_frequency = (dex_swaps / max(1, total_events)) * 100
 
             return {
-                "total_events": len(events),
-                "jetton_transfers": len(jetton_transfers),
-                "dex_swaps": len(dex_swaps),
-                "trading_volume": sum(int(action.get("jetton_transfer", {}).get("amount", 0)) for action in jetton_transfers),
-                "is_active_trader": len(dex_swaps) > 10,
-                "trading_frequency": len(dex_swaps) / max(1, len(events)) * 100
+                "total_events": total_events,
+                "jetton_transfers": jetton_transfers,
+                "dex_swaps": dex_swaps,
+                "trading_volume": trading_volume,
+                "is_active_trader": is_active_trader,
+                "trading_frequency": trading_frequency
             }
         except Exception as e:
+            import traceback
+            logger.error(f"Error in analyze_trading_patterns: {e}\n{traceback.format_exc()}")
             return {"error": str(e)}
 
     def _analyze_jetton_trading(self, address: str, jettons_data: Dict) -> Dict[str, Any]:
@@ -453,3 +525,31 @@ class ToolManager:
         if transaction.get("value", 0) > 0:
             return "ton_transfer"
         return "other"
+
+    def _filter_trading_transactions(self, transactions: dict) -> list:
+        """
+        Filter trading-related transactions from a list of events.
+        Args:
+            transactions: dict with 'events' key (list of event dicts)
+        Returns:
+            List of trading-related event dicts.
+        """
+        events = transactions.get("events", [])
+        trading_types = {
+            "jetton_transfer", "dex_swap", "jetton_swap", "nft_transfer",
+            "JettonTransfer", "JettonSwap", "JettonSale", "TonTransfer", "Swap", "Sale"
+        }
+        filtered = []
+        for event in events:
+            # Check top-level type (case-insensitive)
+            event_type = event.get("type", "").lower()
+            if event_type in {t.lower() for t in trading_types} or event.get("type") in trading_types:
+                filtered.append(event)
+                continue
+            # Check actions array for trading actions
+            for action in event.get("actions", []):
+                action_type = action.get("type", "").lower()
+                if action_type in {t.lower() for t in trading_types} or action.get("type") in trading_types:
+                    filtered.append(event)
+                    break
+        return filtered

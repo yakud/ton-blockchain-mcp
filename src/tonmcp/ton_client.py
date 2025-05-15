@@ -41,7 +41,10 @@ class TonClient:
         """Get account information (TON API v2)"""
         return await self._make_request("GET", f"/v2/accounts/{address}")
 
-    async def get_account_transactions(self, address: str, limit: int = 100, after_lt: int = None, before_lt: int = None, sort_order: str = None) -> Dict:
+    async def get_account_transactions(
+        self, address: str, limit: int = 100, after_lt: int = None, before_lt: int = None,
+        sort_order: str = None, start_date: int = None, end_date: int = None
+    ) -> Dict:
         """Get account transactions (TON API v2)"""
         params = {"limit": limit}
         if after_lt is not None:
@@ -50,6 +53,10 @@ class TonClient:
             params["before_lt"] = before_lt
         if sort_order is not None:
             params["sort_order"] = sort_order
+        if start_date is not None:
+            params["start_date"] = start_date
+        if end_date is not None:
+            params["end_date"] = end_date
         return await self._make_request("GET", f"/v2/accounts/{address}/events", params=params)
 
     async def get_jetton_balances(self, address: str) -> Dict:

@@ -205,6 +205,25 @@ Please analyze:
 
 Provide insights for DeFi investors and yield farmers.""",
                 "description": "DeFi protocol analysis prompt"
+            },
+            
+            "trend_analysis": {
+                "template": """TON Blockchain Trend Analysis
+
+Timeframe: {timeframe}
+Category: {category}
+
+Trending Tokens:
+{trending_tokens}
+
+Trending Pools:
+{trending_pools}
+
+Trending Accounts:
+{trending_accounts}
+
+Please summarize the most significant trends, highlight any unusual activity, and provide actionable insights for traders and analysts.""",
+                "description": "Trend analysis prompt for trending tokens, pools, and accounts on TON"
             }
         }
 
@@ -271,5 +290,14 @@ Provide insights for DeFi investors and yield farmers.""",
         return Prompt(
             name="defi_analysis",
             description=self.prompts["defi_analysis"]["description"],
+            messages=[TextContent(type="text", text=content)]
+        )
+
+    async def get_trend_analysis_prompt(self, **kwargs) -> Prompt:
+        template = self.prompts["trend_analysis"]["template"]
+        content = template.format(**kwargs)
+        return Prompt(
+            name="trend_analysis",
+            description=self.prompts["trend_analysis"]["description"],
             messages=[TextContent(type="text", text=content)]
         )

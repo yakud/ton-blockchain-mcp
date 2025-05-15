@@ -132,6 +132,13 @@ def parse_natural_language_query(query: str) -> Dict[str, Any]:
             results["analysis"] = value
             break
     
+    # After extracting analysis_types, add:
+    trend_patterns = [r'trend', r'trending', r'hot', r'popular', r'top']
+    for pattern in trend_patterns:
+        if re.search(pattern, query_lower):
+            results["analysis"] = "trend"
+            break
+    
     return results
 
 
