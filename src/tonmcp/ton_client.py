@@ -324,3 +324,44 @@ class TonClient:
     async def blockchain_account_inspect(self, address: str) -> Dict:
         """GET /v2/blockchain/accounts/{account_id}/inspect: Inspect blockchain account."""
         return await self._make_request("GET", f"/v2/blockchain/accounts/{address}/inspect")
+
+    async def get_ton_price(self, currency: str = "usd") -> Dict:
+        """Get the current TON price in the specified currency (default: USD) using /v2/rates."""
+        params = {
+            "tokens": "ton",
+            "currencies": currency
+        }
+        data = await self._make_request("GET", "/v2/rates", params=params)
+        # The response structure is {"rates": {"ton": {"prices": {"USD": ...}, ...}}}
+        ton_data = data.get("rates", {}).get("ton", {})
+        prices = ton_data.get("prices", {})
+        diffs = {
+            "diff_24h": ton_data.get("diff_24h", {}).get("TON"),
+            "diff_7d": ton_data.get("diff_7d", {}).get("TON"),
+            "diff_30d": ton_data.get("diff_30d", {}).get("TON"),
+        }
+        return {"price": prices.get(currency.upper()), **diffs}
+
+    async def get_jetton_price(self, tokens: List[str], currency: str = "usd") -> Dict:
+        """Get the current price and recent changes for specified jetton tokens (not TON) in the given currency using /v2/rates."""
+        # Filter out 'ton' if present
+        tokens = [t for t in tokens if t.lower() != "ton"]
+        if not tokens:
+            return {"error": "No jetton tokens specified (or only 'ton' was provided)."}
+        params = {
+            "tokens": ",".join(tokens),
+            "currencies": currency
+        }
+        data = await self._make_request("GET", "/v2/rates", params=params)
+        # The response structure is {"rates": {token1: {...}, token2: {...}, ...}}
+        rates = data.get("rates", {})
+        result = {}
+        for token, info in rates.items():
+            prices = info.get("prices", {})
+            diffs = {
+                "diff_24h": info.get("diff_24h", {}).get(token.upper()),
+                "diff_7d": info.get("diff_7d", {}).get(token.upper()),
+                "diff_30d": info.get("diff_30d", {}).get(token.upper()),
+            }
+            result[token] = {"price": prices.get(currency.upper()), **diffs}
+        return result

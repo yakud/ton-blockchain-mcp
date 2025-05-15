@@ -30,6 +30,8 @@ Risk Assessment:
 - Risk Level: {risk_level}
 - Risk Factors: {risk_factors}
 
+Note: For any calculation or reporting that requires the real-time TON price, use the get_ton_price MCP tool.
+
 Please provide:
 1. Account characterization and purpose
 2. Behavioral patterns analysis
@@ -38,7 +40,7 @@ Please provide:
 5. Notable findings and anomalies
 
 Focus on actionable insights for blockchain analysis and due diligence.""",
-                "description": "Comprehensive TON account analysis prompt"
+                "description": "Comprehensive TON account analysis prompt (use get_ton_price MCP tool for real-time TON price)"
             },
             
             "jetton_analysis": {
@@ -63,6 +65,8 @@ Activity Metrics:
 - Transfer Volume: {total_transfer_volume}
 - Unique Active Accounts: {unique_accounts}
 
+Note: For any calculation or reporting that requires the real-time TON price, use the get_ton_price MCP tool.
+
 Please analyze:
 1. Token distribution and concentration risks
 2. Holder behavior patterns
@@ -71,7 +75,7 @@ Please analyze:
 5. Investment and risk considerations
 
 Provide detailed insights suitable for DeFi analysis and token evaluation.""",
-                "description": "Comprehensive jetton analysis prompt"
+                "description": "Comprehensive jetton analysis prompt (use get_ton_price MCP tool for real-time TON price)"
             },
             
             "nft_analysis": {
@@ -123,6 +127,8 @@ Portfolio Analysis:
 Trading Insights:
 {trading_insights}
 
+Note: For any calculation or reporting that requires the real-time TON price, use the get_ton_price MCP tool.
+
 Please analyze:
 1. Trading strategy identification
 2. Portfolio diversification assessment
@@ -135,7 +141,7 @@ Provide actionable insights for:
 - Risk management recommendations
 - Portfolio rebalancing suggestions
 - Market opportunity identification""",
-                "description": "Trading pattern analysis prompt"
+                "description": "Trading pattern analysis prompt (use get_ton_price MCP tool for real-time TON price)"
             },
             
             "compliance_analysis": {

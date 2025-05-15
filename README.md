@@ -64,7 +64,7 @@ docker-compose up --build
 
 You can easily use this MCP server with Claude Desktop for natural language blockchain queries. Below is an example of checking the TON balance for a wallet address:
 
-![Check TON Balance for Wallet Address](docs/example_claude_for_desktop.png)
+![Check TON Balance for Wallet Address](docs/example.png)
 
 ### Claude Desktop Configuration Example
 
@@ -164,6 +164,19 @@ Analyze trading patterns for a TON address over a specified timeframe. Use for q
 - `address` (str): TON address
 - `timeframe` (str, optional): Time period (e.g., 24h)
 
+#### get_ton_price
+Get the current real-time TON price in the specified currency (default: USD) and recent price changes. Use this tool whenever you need the latest TON price for calculations, analysis, or reporting.
+
+**Parameters:**
+- `currency` (str, optional): The fiat or crypto currency to get the TON price in (default: 'usd').
+
+#### get_jetton_price
+Get the current price and recent changes for specified jetton tokens (not TON) in the given currency. Provide a list of jetton master addresses as tokens. Use this tool to fetch real-time prices for any token except TON.
+
+**Parameters:**
+- `tokens` (list of str): List of jetton master addresses to get prices for (excluding 'ton').
+- `currency` (str, optional): The fiat or crypto currency to get the price in (default: 'usd').
+
 ### System Prompts
 
 - `trading_analysis`: Generate trading analysis prompts
@@ -184,4 +197,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, please open an issue on GitHub or contact the author on Telegram: @devonmojito
+For support, please open an issue on GitHub 
+
+**⚠️ WARNING: This project is in Beta. Do not trust any numbers provided by the LLM model. Nothing in this project constitutes financial advice. Use at your own risk.**

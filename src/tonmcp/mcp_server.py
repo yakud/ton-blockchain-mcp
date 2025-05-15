@@ -63,6 +63,20 @@ class TonMcpServer:
             """Analyze trading patterns for an address."""
             return await self.tool_manager.analyze_trading_patterns(address=address, timeframe=timeframe)
 
+        @tmcp.tool(
+            description="Get the current real-time TON price in the specified currency (default: USD) and recent price changes."
+        )
+        async def get_ton_price(currency: str = "usd") -> Any:
+            """Get the current real-time TON price in the specified currency (default: USD) and recent price changes."""
+            return await self.tool_manager.get_ton_price(currency=currency)
+
+        @tmcp.tool(
+            description="Get the current price and recent changes for specified jetton tokens (not TON) in the given currency. Provide a list of jetton master addresses as tokens."
+        )
+        async def get_jetton_price(tokens: list, currency: str = "usd") -> Any:
+            """Get the current price and recent changes for specified jetton tokens (not TON) in the given currency."""
+            return await self.tool_manager.get_jetton_price(tokens=tokens, currency=currency)
+
     def _register_prompts(self):
         logger.debug("Registering prompts...")
         @tmcp.prompt()
