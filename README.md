@@ -74,6 +74,12 @@ You can easily use this MCP server with Claude Desktop for natural language bloc
 
 ![Get Transaction Details Example](docs/example_get_transaction_details.png)
 
+**Analyze Trading Patterns Example:**
+
+Below is an example output of the `analyze_trading_patterns` tool:
+
+![Analyze Trading Patterns Example](docs/example_analyze_trading_patterns.png)
+
 ### Claude Desktop Configuration Example
 
 To use this MCP server with Claude Desktop, add the following to your Claude Desktop config:
@@ -208,3 +214,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support, please open an issue on GitHub 
 
 **⚠️ WARNING: This project is in Beta. Do not trust any numbers provided by the LLM model. Nothing in this project constitutes financial advice. Use at your own risk.**
+
+## Examples
+
+### Analyze Trading Patterns Example
+
+Below is an example output of the `analyze_trading_patterns` tool:
+
+![Analyze Trading Patterns Example](docs/example_analyze_trading_patterns.png)
