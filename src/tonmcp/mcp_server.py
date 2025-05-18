@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import os
 import sys
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException, status, Depends, Body
+from fastapi import FastAPI, Request, HTTPException, status, Depends, Body, Path
 from fastapi.security import APIKeyHeader
 import uvicorn
 
@@ -134,6 +134,33 @@ async def mcp_post_endpoint(request: Request, body: dict = Body(...)):
         return {"result": result}
     except Exception as e:
         logger.exception("Error handling /mcp POST")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/tools", dependencies=[Depends(get_api_key)])
+async def list_tools():
+    # MCP-compliant tool list
+    tools = []
+    for tool in tmcp.tools:
+        tools.append({
+            "id": tool.name,
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.signature,  # This may need to be MCP schema compliant
+        })
+    return {"tools": tools}
+
+@app.post("/tools/{tool_id}/call", dependencies=[Depends(get_api_key)])
+async def call_tool(tool_id: str = Path(...), body: dict = Body(...)):
+    # Find the tool by ID
+    tool = next((t for t in tmcp.tools if t.name == tool_id), None)
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    # Call the tool with provided arguments
+    try:
+        result = await tool(**body)
+        return {"result": result}
+    except Exception as e:
+        logger.exception(f"Error calling tool {tool_id}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Optionally, health check
