@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException, status, Depends, Body, Path
 from fastapi.security import APIKeyHeader
 import uvicorn
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import Response as StarletteResponse
 
 from mcp.server.fastmcp import FastMCP
 
@@ -108,33 +111,30 @@ def get_api_key(request: Request, api_key: str = Depends(api_key_header)):
         raise HTTPException(status_code=403, detail="Forbidden")
     return key
 
+# --- API Key Middleware for /mcp ---
+class ApiKeyMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        # Only protect /mcp endpoints
+        if request.url.path.startswith("/mcp"):
+            key = request.headers.get("x-api-key") or request.query_params.get("x-api-key")
+            if key != API_KEY:
+                return StarletteResponse("Forbidden", status_code=403)
+        return await call_next(request)
+
+app.add_middleware(ApiKeyMiddleware)
+
 # Register tools/prompts as before
 # ... existing code ...
 
-# SSE endpoint
+# SSE endpoint (legacy, for clients expecting /sse)
 @app.get("/sse", dependencies=[Depends(get_api_key)])
 async def sse_endpoint(request: Request):
     # Use FastMCP's built-in SSE app if available
     return await tmcp.sse_app()(request.scope, request.receive, request._send)
 
-@app.post("/mcp", dependencies=[Depends(get_api_key)])
-async def mcp_post_endpoint(request: Request, body: dict = Body(...)):
-    # Accepts: {"input": "your prompt here"}
-    # Passes the prompt to FastMCP and returns the result
-    prompt = body.get("input")
-    if not prompt:
-        raise HTTPException(status_code=400, detail="Missing 'input' in request body")
-    # Simulate a single-turn MCP call (not streaming)
-    # If FastMCP has a sync call method, use it; else, use a tool directly
-    # Here, we use the analyze_address tool as an example if prompt is a TON address
-    # For a real MCP, you may want to parse and route the prompt
-    try:
-        # This is a generic call; you may want to route/parse prompt for real use
-        result = await tmcp.handle_prompt(prompt)
-        return {"result": result}
-    except Exception as e:
-        logger.exception("Error handling /mcp POST")
-        raise HTTPException(status_code=500, detail=str(e))
+# Mount the StreamableHTTP (MCP) app at /mcp for both POST and SSE
+from starlette.routing import Mount
+app.mount("/mcp", tmcp.streamable_http_app())
 
 @app.get("/tools", dependencies=[Depends(get_api_key)])
 async def list_tools():
