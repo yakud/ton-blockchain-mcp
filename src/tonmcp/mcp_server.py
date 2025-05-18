@@ -94,26 +94,25 @@ class TonMcpServer:
         async def trend_analysis(**kwargs) -> str:
             return await self.prompt_manager.get_trend_analysis_prompt(**kwargs)
 
-def get_api_key():
-    api_key = os.getenv("API_KEY") or os.getenv("TON_API_KEY")
-    if not api_key:
-        raise RuntimeError("API_KEY or TON_API_KEY environment variable is required for remote server.")
-    return api_key
-
 app = FastAPI(title="TON MCP Remote Server", docs_url=None, redoc_url=None)
 
 API_KEY = os.getenv("API_KEY", "testkey")
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 
-def verify_api_key(api_key: str = Depends(api_key_header)):
-    if api_key != API_KEY:
+# --- SECURITY NOTE ---
+# Accepting API key via query parameter is less secure than headers.
+# Only enable for internal/trusted clients (e.g., n8n) that cannot send custom headers.
+def get_api_key(request: Request, api_key: str = Depends(api_key_header)):
+    key = api_key or request.query_params.get("x-api-key")
+    if key != API_KEY:
         raise HTTPException(status_code=403, detail="Forbidden")
+    return key
 
 # Register tools/prompts as before
 # ... existing code ...
 
 # SSE endpoint
-@app.get("/sse", dependencies=[Depends(verify_api_key)])
+@app.get("/sse", dependencies=[Depends(get_api_key)])
 async def sse_endpoint(request: Request):
     # Use FastMCP's built-in SSE app if available
     return await tmcp.sse_app()(request.scope, request.receive, request._send)
