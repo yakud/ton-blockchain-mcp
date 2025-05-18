@@ -5,6 +5,9 @@ from typing import Any, Dict, List, Optional
 import os
 import sys
 from dotenv import load_dotenv
+from fastapi import FastAPI, Request, HTTPException, status, Depends
+from fastapi.security import APIKeyHeader
+import uvicorn
 
 from mcp.server.fastmcp import FastMCP
 
@@ -91,6 +94,42 @@ class TonMcpServer:
         async def trend_analysis(**kwargs) -> str:
             return await self.prompt_manager.get_trend_analysis_prompt(**kwargs)
 
+def get_api_key():
+    api_key = os.getenv("API_KEY") or os.getenv("TON_API_KEY")
+    if not api_key:
+        raise RuntimeError("API_KEY or TON_API_KEY environment variable is required for remote server.")
+    return api_key
+
+app = FastAPI(title="TON MCP Remote Server", docs_url=None, redoc_url=None)
+
+API_KEY = os.getenv("API_KEY", "testkey")
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
+
+def verify_api_key(api_key: str = Depends(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+# Register tools/prompts as before
+# ... existing code ...
+
+# SSE endpoint
+@app.get("/sse", dependencies=[Depends(verify_api_key)])
+async def sse_endpoint(request: Request):
+    # Use FastMCP's built-in SSE app if available
+    return await tmcp.sse_app()(request.scope, request.receive, request._send)
+
+# Streamable HTTP endpoint
+# @app.post("/mcp", dependencies=[Depends(verify_api_key)])
+# async def mcp_http_endpoint(request: Request):
+#     # Not supported: return await tmcp.http_app()(request.scope, request.receive, request._send)
+#     raise HTTPException(status_code=501, detail="HTTP transport not implemented.")
+
+# Optionally, health check
+@app.get("/healthz")
+def health():
+    return {"status": "ok"}
+
+# CLI entry for local dev (stdio)
 def main():
     api_key = os.getenv("TON_API_KEY")
     logger.debug(f"Starting main with TON_API_KEY={api_key}")
@@ -101,4 +140,9 @@ def main():
     tmcp.run(transport="stdio")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if "runserver" in sys.argv:
+        # Run FastAPI app for remote
+        uvicorn.run("tonmcp.mcp_server:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)
+    else:
+        main()

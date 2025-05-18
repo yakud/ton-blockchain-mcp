@@ -214,3 +214,44 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support, please open an issue on GitHub 
 
 **⚠️ WARNING: This project is in Beta. Do not trust any numbers provided by the LLM model. Nothing in this project constitutes financial advice. Use at your own risk.**
+
+## Remote MCP Server (SSE/HTTP) Usage
+
+To run the server as a remote MCP server (supporting both SSE and HTTP transports):
+
+1. Set your API key in the environment:
+
+   ```sh
+   export API_KEY=your_secret_key
+   # or
+   export TON_API_KEY=your_secret_key
+   ```
+
+2. Start the server with FastAPI (using Uvicorn):
+
+   ```sh
+   python -m src.tonmcp.mcp_server runserver
+   # or
+   uvicorn src.tonmcp.mcp_server:app --host 0.0.0.0 --port 8000
+   ```
+
+3. Endpoints:
+   - `GET /sse` — SSE transport (for VS Code, Claude, etc.)
+   - `POST /mcp` — Streamable HTTP transport (future-proof)
+   - Both require `x-api-key` header with your API key.
+   - `GET /healthz` — Health check
+
+Example request (with curl):
+
+```sh
+curl -H "x-api-key: your_secret_key" http://localhost:8000/healthz
+```
+
+## Local STDIO Mode (for development)
+
+To run the server locally (STDIO transport):
+
+```sh
+export TON_API_KEY=your_secret_key
+python -m src.tonmcp.mcp_server
+```
