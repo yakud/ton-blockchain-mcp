@@ -1,23 +1,19 @@
-import asyncio
-import json
 import logging
-from typing import Any, Dict, List, Optional
 import os
 import sys
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException, status, Depends, Body, Path
+from fastapi import FastAPI, Request, HTTPException, Depends, Body, Path
 from fastapi.security import APIKeyHeader
-import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response as StarletteResponse
-
 from mcp.server.fastmcp import FastMCP
-
 from tonmcp.ton_client import TonClient
 from tonmcp.prompts import PromptManager
 from tonmcp.tools import ToolManager
-from tonmcp.utils import parse_natural_language_query
+from mcp.server.sse import SseServerTransport
+from starlette.routing import Mount, Route
+from typing import Any
 
 load_dotenv()
 
@@ -42,7 +38,7 @@ class TonMcpServer:
         @tmcp.tool(
             description="Analyze a TON address for its balance, jetton holdings, NFTs, and recent activity. Optionally performs deep forensic analysis if deep_analysis is True. Use for questions about account overview, holdings, or activity."
         )
-        async def analyze_address(address: str, deep_analysis: bool = False) -> any:
+        async def analyze_address(address: str, deep_analysis: bool = False) -> Any:
             logger.debug(f"analyze_address called with address={address}, deep_analysis={deep_analysis}")
             result = await self.tool_manager.analyze_address(address=address, deep_analysis=deep_analysis)
             logger.debug(f"analyze_address result: {result}")
@@ -102,6 +98,9 @@ app = FastAPI(title="TON MCP Remote Server", docs_url=None, redoc_url=None)
 API_KEY = os.getenv("API_KEY", "testkey")
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 
+# Ensure tools/prompts are registered for remote MCP
+TonMcpServer(api_key=os.getenv("TON_API_KEY"))
+
 # --- SECURITY NOTE ---
 # Accepting API key via query parameter is less secure than headers.
 # Only enable for internal/trusted clients (e.g., n8n) that cannot send custom headers.
@@ -126,15 +125,25 @@ app.add_middleware(ApiKeyMiddleware)
 # Register tools/prompts as before
 # ... existing code ...
 
-# SSE endpoint (legacy, for clients expecting /sse)
-@app.get("/sse", dependencies=[Depends(get_api_key)])
-async def sse_endpoint(request: Request):
-    # Use FastMCP's built-in SSE app if available
-    return await tmcp.sse_app()(request.scope, request.receive, request._send)
+# Create a single SseServerTransport instance for the app
+sse_transport = SseServerTransport("/messages/")
 
-# Mount the StreamableHTTP (MCP) app at /mcp/ for both POST and SSE
-from starlette.routing import Mount
-app.mount("/mcp/", tmcp.streamable_http_app())
+# Remove or comment out the old SSE endpoint and app.mount
+# @app.get("/sse", dependencies=[Depends(get_api_key)])
+# async def sse_endpoint(request: Request):
+#     return await tmcp.sse_app()(request.scope, request.receive, request._send)
+# app.mount("/", tmcp.sse_app())
+
+# Add new /sse and /messages/ endpoints using the shared sse_transport
+async def sse_endpoint(request: Request):
+    async with sse_transport.connect_sse(request.scope, request.receive, request._send) as streams:
+        await tmcp._mcp_server.run(
+            streams[0], streams[1], tmcp._mcp_server.create_initialization_options()
+        )
+    return Response()
+
+app.router.routes.append(Route("/sse", endpoint=sse_endpoint, methods=["GET"]))
+app.router.routes.append(Mount("/messages/", app=sse_transport.handle_post_message))
 
 @app.get("/tools", dependencies=[Depends(get_api_key)])
 async def list_tools():
@@ -179,9 +188,9 @@ def main():
     tmcp.run(transport="stdio")
 
 if __name__ == "__main__":
-    import sys
     if "runserver" in sys.argv:
-        # Run FastAPI app for remote
+        # Run FastAPI app for remote (legacy, not for MCP protocol)
+        import uvicorn
         uvicorn.run("tonmcp.mcp_server:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)
     else:
         main()

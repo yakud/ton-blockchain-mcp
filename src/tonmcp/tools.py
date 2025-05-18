@@ -553,3 +553,12 @@ class ToolManager:
                     filtered.append(event)
                     break
         return filtered
+
+    # --- STUBS FOR UNDEFINED INTERNAL METHODS ---
+    async def _check_suspicious_patterns(self, address, transactions):
+        """Stub for suspicious pattern checks. Replace with real logic as needed."""
+        return []
+
+    async def _analyze_pool_activity(self, dex_pools):
+        """Stub for pool activity analysis. Replace with real logic as needed."""
+        return []

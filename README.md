@@ -32,16 +32,15 @@ cd ton-blockchain-mcp-remote
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
-* You might want to put the API key in .env as well
+3. (Optional) Set up environment variables:
+* You may want to put your TON API key in a `.env` file for convenience, but it is not required for running the server if you use the default/test configuration.
+
+4. Run the server (SSE mode):
 ```bash
-export TON_API_KEY=your_api_key_here
+PYTHONPATH=src python -m tonmcp.mcp_server runserver
 ```
 
-4. Run the server:
-```bash
-python -m src.mcp_server
-```
+This will start the FastAPI server with SSE endpoints for MCP protocol at `http://localhost:8000/sse` and `http://localhost:8000/messages/`.
 
 ### PyPI Installation
 
@@ -92,7 +91,8 @@ To use this MCP server with Claude Desktop, add the following to your Claude Des
       "command": "/Users/devon/ton-mcp/ton-mcp-server/venv/bin/python",
       "args": [
         "-m",
-        "tonmcp.mcp_server"
+        "tonmcp.mcp_server",
+        "runserver"
       ],
       "cwd": "/Users/devon/ton-mcp/ton-mcp-server/src",
       "env": {
@@ -107,24 +107,16 @@ To use this MCP server with Claude Desktop, add the following to your Claude Des
 
 ## Usage
 
-### Basic Queries
+### Basic Queries (SSE Client Example)
 
-```python
-import asyncio
-from mcp_client import McpClient
+The server uses Server-Sent Events (SSE) for communication. You can use the provided example client in `examples/sse_claude_client.py` to interact with the server:
 
-async def main():
-    client = McpClient("http://localhost:8000")
-    
-    # Analyze an address
-    result = await client.call_tool("analyze_address", {
-        "address": "EQD1234...",
-        "deep_analysis": True
-    })
-    print(result)
-
-asyncio.run(main())
+```bash
+pip install httpx sseclient-py requests
+python examples/sse_claude_client.py
 ```
+
+This client will connect to the `/sse` endpoint, perform the MCP handshake, and call tools such as `analyze_address`.
 
 ### Natural Language Examples
 
@@ -137,12 +129,11 @@ asyncio.run(main())
 ## Configuration
 
 Configuration can be provided via:
-- Environment variables
-- `config/settings.json` file
-- Runtime parameters
+- Environment variables (optional)
+- `config/settings.json` file (optional)
+- Runtime parameters (optional)
 
 Key configuration options:
-- `TON_API_KEY`: Your TON API key
 - `MCP_HOST`: Server host (default: localhost)
 - `MCP_PORT`: Server port (default: 8000)
 - `LOG_LEVEL`: Logging level (default: INFO)
