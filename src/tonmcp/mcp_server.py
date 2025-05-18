@@ -132,9 +132,9 @@ async def sse_endpoint(request: Request):
     # Use FastMCP's built-in SSE app if available
     return await tmcp.sse_app()(request.scope, request.receive, request._send)
 
-# Mount the StreamableHTTP (MCP) app at /mcp for both POST and SSE
+# Mount the StreamableHTTP (MCP) app at /mcp/ for both POST and SSE
 from starlette.routing import Mount
-app.mount("/mcp", tmcp.streamable_http_app())
+app.mount("/mcp/", tmcp.streamable_http_app())
 
 @app.get("/tools", dependencies=[Depends(get_api_key)])
 async def list_tools():
