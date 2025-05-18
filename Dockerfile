@@ -10,4 +10,4 @@ ENV PYTHONPATH=/app/src
 
 COPY . .
 
-CMD ["uvicorn", "src.tonmcp.mcp_server:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD ["uvicorn", "src.tonmcp.mcp_server:app", "--host", "0.0.0.0", "--port", "8080"] 
