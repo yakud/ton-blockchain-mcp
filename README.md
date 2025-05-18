@@ -23,8 +23,8 @@ A Model Context Protocol (MCP) server for natural language interaction with the 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/devonmojito/ton-blockchain-mcp.git
-cd ton-blockchain-mcp
+git clone https://github.com/devonmojito/ton-blockchain-mcp-remote.git
+cd ton-blockchain-mcp-remote
 ```
 
 2. Install dependencies:

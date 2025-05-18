@@ -4,14 +4,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="ton-mcp-server",
+    name="ton-blockchain-mcp-remote",
     version="0.1.0",
     author="Devon Mojito",
     author_email="devonmojito@gmail.com",
     description="Model Context Protocol server for TON blockchain data analysis",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/devonmojito/ton-mcp-server",
+    url="https://github.com/devonmojito/ton-blockchain-mcp-remote",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
@@ -58,7 +58,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "ton-mcp-server=src.mcp_server:main",
+            "ton-blockchain-mcp-remote=src.mcp_server:main",
         ],
     },
 )
