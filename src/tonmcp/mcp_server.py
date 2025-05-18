@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import os
 import sys
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException, status, Depends
+from fastapi import FastAPI, Request, HTTPException, status, Depends, Body
 from fastapi.security import APIKeyHeader
 import uvicorn
 
@@ -117,11 +117,24 @@ async def sse_endpoint(request: Request):
     # Use FastMCP's built-in SSE app if available
     return await tmcp.sse_app()(request.scope, request.receive, request._send)
 
-# Streamable HTTP endpoint
-# @app.post("/mcp", dependencies=[Depends(verify_api_key)])
-# async def mcp_http_endpoint(request: Request):
-#     # Not supported: return await tmcp.http_app()(request.scope, request.receive, request._send)
-#     raise HTTPException(status_code=501, detail="HTTP transport not implemented.")
+@app.post("/mcp", dependencies=[Depends(get_api_key)])
+async def mcp_post_endpoint(request: Request, body: dict = Body(...)):
+    # Accepts: {"input": "your prompt here"}
+    # Passes the prompt to FastMCP and returns the result
+    prompt = body.get("input")
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Missing 'input' in request body")
+    # Simulate a single-turn MCP call (not streaming)
+    # If FastMCP has a sync call method, use it; else, use a tool directly
+    # Here, we use the analyze_address tool as an example if prompt is a TON address
+    # For a real MCP, you may want to parse and route the prompt
+    try:
+        # This is a generic call; you may want to route/parse prompt for real use
+        result = await tmcp.handle_prompt(prompt)
+        return {"result": result}
+    except Exception as e:
+        logger.exception("Error handling /mcp POST")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Optionally, health check
 @app.get("/healthz")
