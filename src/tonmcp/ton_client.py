@@ -29,7 +29,7 @@ class TonClient:
         session = await self._get_session()
         url = f"{self.base_url}{endpoint}"
         try:
-            async with session.request(method, url, params=params, json=data) as response:
+            async with session.request(method, url, params=params, json=data, timeout=aiohttp.ClientTimeout(total=60)) as response:
                 response.raise_for_status()
                 return await response.json()
         except aiohttp.ClientError as e:
@@ -333,13 +333,12 @@ class TonClient:
         return await self._make_request("GET", f"/v2/blockchain/accounts/{address}/inspect")
 
     async def get_ton_price(self, currency: str = "usd") -> Dict:
-        """Get the current TON price in the specified currency (default: USD) using /v2/rates."""
+        """Get the current TON price in the specified currency (default: USD) using /v2/rates. Fallback to CoinGecko if tonapi.io fails."""
         params = {
             "tokens": "ton",
             "currencies": currency
         }
         data = await self._make_request("GET", "/v2/rates", params=params)
-        # The response structure is {"rates": {"ton": {"prices": {"USD": ...}, ...}}}
         ton_data = data.get("rates", {}).get("ton", {})
         prices = ton_data.get("prices", {})
         diffs = {
@@ -347,7 +346,23 @@ class TonClient:
             "diff_7d": ton_data.get("diff_7d", {}).get("TON"),
             "diff_30d": ton_data.get("diff_30d", {}).get("TON"),
         }
-        return {"price": prices.get(currency.upper()), **diffs}
+        price = prices.get(currency.upper())
+        if price is not None:
+            return {"price": price, **diffs, "source": "tonapi.io"}
+        # Fallback to CoinGecko
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies={currency}"
+                async with session.get(url) as resp:
+                    resp.raise_for_status()
+                    cg_data = await resp.json()
+                    cg_price = cg_data.get("the-open-network", {}).get(currency.lower())
+                    if cg_price is not None:
+                        logger.warning("TON price fallback: using CoinGecko price.")
+                        return {"price": cg_price, "source": "coingecko"}
+        except Exception as e:
+            logger.error(f"TON price fallback failed: {e}")
+        return {"price": None, **diffs, "source": "none"}
 
     async def get_jetton_price(self, tokens: List[str], currency: str = "usd") -> Dict:
         """Get the current price and recent changes for specified jetton tokens (not TON) in the given currency using /v2/rates."""

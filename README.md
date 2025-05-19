@@ -246,3 +246,25 @@ To run the server locally (STDIO transport):
 export TON_API_KEY=your_secret_key
 python -m src.tonmcp.mcp_server
 ```
+
+## Running Locally
+
+To start the MCP server and agent for local development:
+
+1. **Start the MCP Server:**
+   - Run the provided script:
+     ```sh
+     bash run_local.sh
+     ```
+   - Or manually:
+     ```sh
+     export PYTHONPATH=$PWD/src
+     uvicorn tonmcp.mcp_server:app --reload --port 8000
+     ```
+
+2. **Start the Agent (in a new terminal):**
+   ```sh
+   python3 ton_agent/app.py
+   ```
+
+Make sure your `.env` file is configured with the correct keys and `TON_AGENT_SERVER_MODE=local` for local development.

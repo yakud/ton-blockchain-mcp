@@ -187,7 +187,7 @@ class ToolManager:
 
             # Enhance with additional analysis
             analysis = {
-                "type": self._classify_transaction_type(transaction),
+                "type": self.classify_transaction_type(transaction),
                 "value_transfer": format_ton_amount(transaction.get("value", 0)),
                 "gas_fees": format_ton_amount(transaction.get("gas_fee", 0)),
                 "participants": {
@@ -236,10 +236,7 @@ class ToolManager:
 
     async def analyze_trading_patterns(self, address: str, timeframe: str = "24h") -> Dict[str, Any]:
         """
-        Analyze trading patterns for an address.
-        Args:
-            address: Address to analyze
-            timeframe: Time period for analysis (e.g., "24h", "7d", "30d", "1y")
+        Analyze trading patterns for a TON address over a specified timeframe.
         """
         logger = logging.getLogger("tonmcp.tools.analyze_trading_patterns")
 
@@ -260,29 +257,19 @@ class ToolManager:
                 # Default to 24h
                 start_date = int((now - timedelta(hours=24)).timestamp())
 
-            all_events = []
-            before_lt = None
-            while True:
-                response = await self.ton_client.get_account_transactions(
-                    address,
-                    limit=100,
-                    before_lt=before_lt,
-                    start_date=start_date,
-                    end_date=end_date
-                )
-                events = response.get("events", [])
-                if not events:
-                    break
-                all_events.extend(events)
-                if len(events) < 100:
-                    break
-                before_lt = events[-1].get("lt")
-                if not before_lt:
-                    break
+            response = await self.ton_client.get_account_transactions(
+                address,
+                start_date=start_date,
+                end_date=end_date,
+                limit=100
+            )
+            events = response.get("events", [])
+            if not events:
+                return {"error": "No events found"}
 
             # Debug: log the structure of the first few events and actions
-            logger.debug(f"Fetched {len(all_events)} events for address {address}")
-            for i, event in enumerate(all_events[:3]):
+            logger.debug(f"Fetched {len(events)} events for address {address}")
+            for i, event in enumerate(events[:3]):
                 logger.debug(f"Event {i}: {event}")
                 actions = event.get("actions", [])
                 for j, action in enumerate(actions[:3]):
@@ -296,7 +283,7 @@ class ToolManager:
             dex_swaps = 0
             trading_volume = 0
 
-            for event in all_events:
+            for event in events:
                 for action in event.get("actions", []):
                     action_type = action.get("type", "")
                     if action_type in jetton_transfer_types:
@@ -317,7 +304,7 @@ class ToolManager:
                             except Exception:
                                 pass
 
-            total_events = len(all_events)
+            total_events = len(events)
             is_active_trader = dex_swaps > 10
             trading_frequency = (dex_swaps / max(1, total_events)) * 100
 
@@ -475,6 +462,22 @@ class ToolManager:
         
         return characteristics[:5]  # Limit to top 5 characteristics
 
+    def classify_transaction_type(self, transaction: dict) -> str:
+        """
+        Classify the type of a TON transaction based on its fields.
+        """
+        if not transaction:
+            return "unknown"
+        if transaction.get("jetton_transfer"):
+            return "jetton_transfer"
+        if transaction.get("swap"):
+            return "dex_swap"
+        if transaction.get("nft_transfer"):
+            return "nft_transfer"
+        if transaction.get("value", 0) > 0:
+            return "ton_transfer"
+        return "other"
+
     async def get_ton_price(self, currency: str = "usd") -> Dict[str, Any]:
         """Get the current real-time TON price in the specified currency (default: USD) and recent price changes."""
         try:
@@ -488,6 +491,20 @@ class ToolManager:
             return await self.ton_client.get_jetton_price(tokens=tokens, currency=currency)
         except Exception as e:
             return {"error": str(e)}
+
+    def base64url_to_hex(self, address: str) -> str:
+        """Convert a TON base64url address to raw hex format (0:...)"""
+        import base64
+        import re
+        if address.startswith('0:') or address.startswith('EQ'):
+            return address
+        address = re.sub(r'[^A-Za-z0-9_-]', '', address)
+        address = address + '=' * ((8 - len(address) % 8) % 8)
+        try:
+            raw = base64.urlsafe_b64decode(address)
+            return f"0:{raw.hex()}"
+        except Exception:
+            return address
 
     async def _analyze_transaction_patterns(self, transactions: Dict) -> Dict[str, Any]:
         """
@@ -509,22 +526,6 @@ class ToolManager:
             "first_transaction_time": events[-1].get("utime") if events else None,
             "last_transaction_time": events[0].get("utime") if events else None,
         }
-
-    def _classify_transaction_type(self, transaction: dict) -> str:
-        """
-        Classify the type of a TON transaction based on its fields.
-        """
-        if not transaction:
-            return "unknown"
-        if transaction.get("jetton_transfer"):
-            return "jetton_transfer"
-        if transaction.get("swap"):
-            return "dex_swap"
-        if transaction.get("nft_transfer"):
-            return "nft_transfer"
-        if transaction.get("value", 0) > 0:
-            return "ton_transfer"
-        return "other"
 
     def _filter_trading_transactions(self, transactions: dict) -> list:
         """
@@ -562,3 +563,17 @@ class ToolManager:
     async def _analyze_pool_activity(self, dex_pools):
         """Stub for pool activity analysis. Replace with real logic as needed."""
         return []
+
+def base64url_to_hex(address: str) -> str:
+    """Convert a TON base64url address to raw hex format (0:...)"""
+    import base64
+    import re
+    if address.startswith('0:') or address.startswith('EQ'):
+        return address
+    address = re.sub(r'[^A-Za-z0-9_-]', '', address)
+    address = address + '=' * ((8 - len(address) % 8) % 8)
+    try:
+        raw = base64.urlsafe_b64decode(address)
+        return f"0:{raw.hex()}"
+    except Exception:
+        return address
