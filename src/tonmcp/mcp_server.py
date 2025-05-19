@@ -16,7 +16,6 @@ from starlette.routing import Mount, Route
 from typing import Any
 
 load_dotenv()
-print("[DEBUG] TON_API_KEY loaded:", os.environ.get("TON_API_KEY"))
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
 logger = logging.getLogger(__name__)

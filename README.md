@@ -19,12 +19,22 @@ A Model Context Protocol (MCP) server for natural language interaction with the 
 - Python 3.10+
 - TON API key from [TONAPI](https://tonconsole.com/tonapi)
 
+### Environment Configuration (.env)
+
+To securely provide sensitive configuration (such as your TON API key), create a `.env` file in the project root directory. This file will be loaded automatically if present.
+
+**Example `.env` file:**
+
+```
+TON_API_KEY=YOUR_TON_API_KEY
+```
+
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/devonmojito/ton-blockchain-mcp-remote.git
-cd ton-blockchain-mcp-remote
+git clone https://github.com/devonmojito/ton-blockchain-mcp.git
+cd ton-blockchain-mcp
 ```
 
 2. Install dependencies:
@@ -32,34 +42,9 @@ cd ton-blockchain-mcp-remote
 pip install -r requirements.txt
 ```
 
-3. (Optional) Set up environment variables:
-* You may want to put your TON API key in a `.env` file for convenience, but it is not required for running the server if you use the default/test configuration.
-
-4. Run the server (SSE mode):
-```bash
-PYTHONPATH=src python -m tonmcp.mcp_server runserver
-```
-
-This will start the FastAPI server with SSE endpoints for MCP protocol at `http://localhost:8000/sse` and `http://localhost:8000/messages/`.
-
-### PyPI Installation
-
-You can also install the TON MCP Server directly from PyPI:
-
-```bash
-pip install ton-mcp-server
-```
-
-### Using Docker
-
-```bash
-# Build and run with Docker Compose
-docker-compose up --build
-```
-
 ---
 
-## Example: Using TON MCP Server with Claude Desktop
+## Using TON MCP Server with Claude Desktop
 
 You can easily use this MCP server with Claude Desktop for natural language blockchain queries. Below are some example use cases:
 
@@ -86,37 +71,28 @@ To use this MCP server with Claude Desktop, add the following to your Claude Des
 
 ```json
 {
-  "mcpServers": {
-    "ton-mcp-server": {
-      "command": "/Users/devon/ton-mcp/ton-mcp-server/venv/bin/python",
-      "args": [
-        "-m",
-        "tonmcp.mcp_server",
-        "runserver"
-      ],
-      "cwd": "/Users/devon/ton-mcp/ton-mcp-server/src",
-      "env": {
-        "PYTHONPATH": "/Users/devon/ton-mcp/ton-mcp-server/src"
-      }
+    "mcpServers":
+    {
+        "ton-mcp-server":
+        {
+            "command": "/Users/devon/ton-mcp/ton-blockchain-mcp/venv/bin/python",
+            "args":
+            [
+                "-m",
+                "tonmcp.mcp_server"
+            ],
+            "cwd": "/Users/devon/ton-mcp/ton-blockchain-mcp/src",
+            "env":
+            {
+                "PYTHONPATH": "/Users/devon/ton-mcp/ton-blockchain-mcp/src"
+            },
+            "stdio": true
+        }
     }
-  }
 }
 ```
 
 ---
-
-## Usage
-
-### Basic Queries (SSE Client Example)
-
-The server uses Server-Sent Events (SSE) for communication. You can use the provided example client in `examples/sse_claude_client.py` to interact with the server:
-
-```bash
-pip install httpx sseclient-py requests
-python examples/sse_claude_client.py
-```
-
-This client will connect to the `/sse` endpoint, perform the MCP handshake, and call tools such as `analyze_address`.
 
 ### Natural Language Examples
 
@@ -126,17 +102,6 @@ This client will connect to the `/sse` endpoint, perform the MCP handshake, and 
 - "Show suspicious activity for address ABC"
 - "Trace money flow from this address"
 
-## Configuration
-
-Configuration can be provided via:
-- Environment variables (optional)
-- `config/settings.json` file (optional)
-- Runtime parameters (optional)
-
-Key configuration options:
-- `MCP_HOST`: Server host (default: localhost)
-- `MCP_PORT`: Server port (default: 8000)
-- `LOG_LEVEL`: Logging level (default: INFO)
 
 ## MCP Tools & System Prompts Documentation
 
@@ -206,65 +171,3 @@ For support, please open an issue on GitHub
 
 **⚠️ WARNING: This project is in Beta. Do not trust any numbers provided by the LLM model. Nothing in this project constitutes financial advice. Use at your own risk.**
 
-## Remote MCP Server (SSE/HTTP) Usage
-
-To run the server as a remote MCP server (supporting both SSE and HTTP transports):
-
-1. Set your API key in the environment:
-
-   ```sh
-   export API_KEY=your_secret_key
-   # or
-   export TON_API_KEY=your_secret_key
-   ```
-
-2. Start the server with FastAPI (using Uvicorn):
-
-   ```sh
-   python -m src.tonmcp.mcp_server runserver
-   # or
-   uvicorn src.tonmcp.mcp_server:app --host 0.0.0.0 --port 8000
-   ```
-
-3. Endpoints:
-   - `GET /sse` — SSE transport (for VS Code, Claude, etc.)
-   - `POST /mcp` — Streamable HTTP transport (future-proof)
-   - Both require `x-api-key` header with your API key.
-   - `GET /healthz` — Health check
-
-Example request (with curl):
-
-```sh
-curl -H "x-api-key: your_secret_key" http://localhost:8000/healthz
-```
-
-## Local STDIO Mode (for development)
-
-To run the server locally (STDIO transport):
-
-```sh
-export TON_API_KEY=your_secret_key
-python -m src.tonmcp.mcp_server
-```
-
-## Running Locally
-
-To start the MCP server and agent for local development:
-
-1. **Start the MCP Server:**
-   - Run the provided script:
-     ```sh
-     bash run_local.sh
-     ```
-   - Or manually:
-     ```sh
-     export PYTHONPATH=$PWD/src
-     uvicorn tonmcp.mcp_server:app --reload --port 8000
-     ```
-
-2. **Start the Agent (in a new terminal):**
-   ```sh
-   python3 ton_agent/app.py
-   ```
-
-Make sure your `.env` file is configured with the correct keys and `TON_AGENT_SERVER_MODE=local` for local development.
