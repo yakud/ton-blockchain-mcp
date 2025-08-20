@@ -1,0 +1,80 @@
+# Smithery configuration file
+# Reference: https://smithery.ai/docs/build/project-config/smithery.yaml
+
+name: "@yakud/ton-blockchain-mcp"
+version: "1.0.0"
+description: "A Model Context Protocol (MCP) server for natural language interaction with the TON blockchain 💎"
+author:
+  name: "yakud"
+  url: "https://github.com/yakud"
+license: "MIT"
+keywords: 
+  - mcp-server
+  - ton-blockchain
+  - cryptocurrency
+  - blockchain-analysis
+  - trading-analysis
+  - forensics
+  - defi
+
+# Runtime requirements
+dependencies:
+  python: ">=3.10"
+
+# Build configuration using Docker
+build:
+  dockerfile: Dockerfile
+  dockerBuildPath: "."
+
+# Start command configuration
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required: ["TON_API_KEY"]
+    properties:
+      TON_API_KEY:
+        type: string
+        title: "TON API Key"
+        description: "Your TON API key from TONAPI (https://tonconsole.com/tonapi). Required for accessing TON blockchain data."
+      LOG_LEVEL:
+        type: string
+        title: "Log Level"
+        description: "Logging level for the server"
+        default: "INFO"
+        enum: ["DEBUG", "INFO", "WARNING", "ERROR"]
+      MCP_HOST:
+        type: string
+        title: "MCP Host"
+        description: "Host address for the MCP server"
+        default: "0.0.0.0"
+      MCP_PORT:
+        type: number
+        title: "MCP Port"
+        description: "Port number for the MCP server"
+        default: 8000
+        minimum: 1024
+        maximum: 65535
+
+  # Command function for starting the Python MCP server
+  commandFunction: |-
+    (config) => ({
+      command: "python",
+      args: ["-m", "tonmcp.mcp_server"],
+      env: {
+        TON_API_KEY: config.TON_API_KEY,
+        LOG_LEVEL: config.LOG_LEVEL || "INFO",
+        MCP_HOST: config.MCP_HOST || "0.0.0.0",
+        MCP_PORT: config.MCP_PORT?.toString() || "8000",
+        PYTHONPATH: "/app/src"
+      },
+      cwd: "/app"
+    })
+
+# Example configuration for UI display
+exampleConfig:
+  TON_API_KEY: "your-tonapi-key-here"
+  LOG_LEVEL: "INFO"
+  MCP_HOST: "0.0.0.0"
+  MCP_PORT: 8000
+EOF
