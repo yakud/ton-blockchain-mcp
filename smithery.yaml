@@ -22,7 +22,7 @@ build:
   dockerfile: Dockerfile
   dockerBuildPath: "."
 
-# Start command configuration
+# Start command configuration for HTTP transport
 startCommand:
   type: http
   configSchema:
@@ -32,20 +32,13 @@ startCommand:
       TON_API_KEY:
         type: string
         title: "TON API Key"
-        description: "Your TON API key from TONAPI"
-
-  # Command function for Python MCP server with stdio
-  commandFunction: |
-    (config) => ({
-      command: "python",
-      args: ["-m", "tonmcp.mcp_server"],
-      env: {
-        TON_API_KEY: config.TON_API_KEY,
-        LOG_LEVEL: config.LOG_LEVEL || "INFO",
-        PYTHONPATH: "/app/src"
-      },
-      cwd: "/app"
-    })
+        description: "Your TON API key from TONAPI (https://tonconsole.com/tonapi). Required for accessing TON blockchain data."
+      LOG_LEVEL:
+        type: string
+        title: "Log Level"
+        description: "Logging level for the server"
+        default: "INFO"
+        enum: ["DEBUG", "INFO", "WARNING", "ERROR"]
 
 # Example configuration for UI display
 exampleConfig:
